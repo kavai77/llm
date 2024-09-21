@@ -1,11 +1,16 @@
 package com.himadri.llm.db;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.himadri.llm.LlmEndpoint;
 import com.himadri.llm.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 @Component
@@ -27,13 +32,25 @@ public class DatabaseService {
         userDocument.update("lastLogin", FieldValue.serverTimestamp());
     }
 
-    public void addInference(String userId, String request, String response) {
+    public void addInference(String userId, LlmEndpoint.Model model, String request, String response) {
         firestore.collection("users").document(userId).update("inferenceNumber", FieldValue.increment(1));
         firestore.collection("inference").add(Map.of(
             "userId", userId,
+            "model", model.name(),
             "request", request,
             "response", response,
             "date", FieldValue.serverTimestamp()
         ));
+    }
+
+    @SneakyThrows
+    public long getNumberOfInferences(String userId) {
+        return firestore.collection("inference")
+                .whereEqualTo("userId", userId)
+                .whereGreaterThanOrEqualTo("date", Timestamp.ofTimeSecondsAndNanos(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond(), 0))
+                .count()
+                .get()
+                .get()
+                .getCount();
     }
 }

@@ -3,6 +3,7 @@ package com.himadri.llm;
 import com.himadri.llm.db.DatabaseService;
 import com.himadri.llm.security.AuthenticationService;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @PropertySource("file:/usr/local/secrets/llm/secrets.properties")
 public class LlmEndpoint {
     public static final String DATA_PREFIX = "data: ";
-    public static final String REPLICATE_PREDICT_API = "https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions";
     public static final int MAX_TOKENS = 2048;
 
     @Value("${replicate.bearer.auth}")
@@ -51,10 +51,21 @@ public class LlmEndpoint {
 
     @GetMapping(value = "/predict", produces=MediaType.TEXT_EVENT_STREAM_VALUE)
     @SneakyThrows
-    public SseEmitter predict(@RequestParam String input) {
+    public SseEmitter predict(@RequestParam("input") String input) {
         checkArgument(isNotBlank(input));
         SseEmitter emitter = new SseEmitter();
         var userId = authenticationService.getUid();
+        var numberOfInferences = databaseService.getNumberOfInferences(userId);
+        Model model;
+        if (numberOfInferences < 5) {
+            model = Model.LLAMA_3_1_405B_INSTRUCT;
+        } else if (numberOfInferences < 20) {
+            model = Model.LLAMA_3_70B_INSTRUCT;
+        } else {
+            closeEmitter(emitter, new AtomicReference<>(new IllegalStateException("You have reached the maximum number of questions today. Please come back tomorrow.")));
+            return emitter;
+        }
+
 
         Thread.startVirtualThread(() -> {
             RestTemplate restTemplate = new RestTemplate();
@@ -69,9 +80,9 @@ public class LlmEndpoint {
                             .max_tokens(MAX_TOKENS)
                             .build())
                     .build(), headers);
-            var predictApiResponse = restTemplate.exchange(REPLICATE_PREDICT_API, HttpMethod.POST, entity, PredictApiResponse.class);
+            var predictApiResponse = restTemplate.exchange(model.getUrl(), HttpMethod.POST, entity, PredictApiResponse.class);
             StringBuilder sb = new StringBuilder();
-            AtomicReference<IOException> completedWithError = new AtomicReference<>();
+            AtomicReference<Exception> completedWithError = new AtomicReference<>();
             try (var httpResponse = restTemplate.execute(predictApiResponse.getBody().urls().stream(), HttpMethod.GET,
                 request -> request.getHeaders().add("Accept", "text/event-stream"),
                 response -> {
@@ -93,7 +104,7 @@ public class LlmEndpoint {
                      } catch (IOException e) {
                          completedWithError.set(e);
                      }
-                     databaseService.addInference(userId, input, sb.toString());
+                     databaseService.addInference(userId, model, input, sb.toString());
                      return response;
                  })) {
             } finally {
@@ -103,8 +114,11 @@ public class LlmEndpoint {
         return emitter;
     }
 
-    private static void closeEmitter(SseEmitter emitter, AtomicReference<IOException> completedWithError) {
+    private static void closeEmitter(SseEmitter emitter, AtomicReference<Exception> completedWithError) {
         try {
+            if (completedWithError.get() != null) {
+                emitter.send(SseEmitter.event().name("error").data(completedWithError.get().getMessage()));
+            }
             emitter.send(SseEmitter.event().name("done").data(""));
         } catch (IOException e) {
             completedWithError.set(e);
@@ -115,6 +129,15 @@ public class LlmEndpoint {
                 emitter.complete();
             }
         }
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    public enum Model {
+        LLAMA_3_1_405B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions"),
+        LLAMA_3_70B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions");
+
+        private final String url;
     }
 
     @Builder

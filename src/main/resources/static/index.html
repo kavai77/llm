@@ -59,6 +59,9 @@
             eventSource.addEventListener("message", (event) => {
                 $("#responseArea").val(event.data);
             })
+            eventSource.addEventListener("error", (event) => {
+                $("#responseArea").val("Error: " + event.data);
+            })
             eventSource.addEventListener("done", () => {
                 eventSource.close();
             })
