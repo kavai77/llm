@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Unhelpful Assistant</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+</head>
+<body>
+<div class="container-sm pt-3">
+    <div class="row">
+        <div class="col">
+            <h1>Unhelpful Assistant</h1>
+        </div>
+        <div class="col right align-self-end hidden" id="loggedInUserContainer">
+            <img id="avatar" height="40px" src="" style="border-radius: 50%;" data-toggle="tooltip"
+                 data-placement="bottom">&nbsp;
+            <a href="#" id="logout"><small>Sign Out</small></a>
+        </div>
+    </div>
+    <div id="loginContainer">
+        <div id="firebaseui-auth-container"></div>
+    </div>
+    <div id="appDiv">
+        <form>
+            <div class="mb-3">
+                <label for="questionInput" class="form-label">Type your question</label>
+                <input type="text" class="form-control" id="questionInput" placeholder="Your question">
+            </div>
+            <button type="submit" class="btn btn-primary" id="submitButton">Submit</button>
+            <div class="mt-5">
+                <div class="spinner-border text-primary" role="status" id="responseSpinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div id="responseDiv">
+                    <label for="responseArea" class="form-label">Response</label>
+                    <textarea class="form-control" id="responseArea" rows="10" readonly></textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function () {
+        $("#responseDiv").hide();
+        $("#responseSpinner").hide();
+        $("#submitButton").click(function () {
+            $("#responseArea").val('Hang on... Getting the answer ready for you...');
+            $("#responseDiv").show();
+            const eventSource = new EventSource("/llm/predict?input=" + encodeURIComponent($("#questionInput").val()));
+            eventSource.addEventListener("message", (event) => {
+                $("#responseArea").val(event.data);
+            })
+            eventSource.addEventListener("error", (event) => {
+                $("#responseArea").val("Error: " + event.data);
+            })
+            eventSource.addEventListener("done", () => {
+                eventSource.close();
+            })
+            return false;
+        });
+
+        // Import the functions you need from the SDKs you need
+        const firebaseConfig = {
+            apiKey: "AIzaSyArvJCZKBBFL9AVP1U32fRc5IdXoQrtlsE",
+            authDomain: "sarcastic-llm.firebaseapp.com",
+            projectId: "sarcastic-llm",
+            storageBucket: "sarcastic-llm.appspot.com",
+            messagingSenderId: "447406791921",
+            appId: "1:447406791921:web:df58ecde16fc2346fedd50",
+            measurementId: "G-B4TQ6JS8PH"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(authStateObserver);
+
+        var ui = new firebaseui.auth.AuthUI(auth);
+        ui.start('#firebaseui-auth-container', {
+            signInOptions: [
+                // List of OAuth providers supported.
+                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                firebase.auth.FacebookAuthProvider.PROVIDER_ID
+                // firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+                // firebase.auth.GithubAuthProvider.PROVIDER_ID
+            ],
+            signInSuccessUrl: '/index2.html',
+            signInFlow: 'popup'
+        });
+
+        $("#logout").click(function () {
+            auth.signOut();
+        });
+    });
+
+    function authStateObserver(user) {
+        if (user) { // User is signed in!
+            user.getIdToken().then(function(accessToken) {
+                $("#loginContainer").hide();
+                $("#appDiv").show();
+                $("#loggedInUserContainer").show();
+                $("#avatar").prop('src', user.photoURL)
+                    .prop('title', user.displayName)
+                    .tooltip('_fixTitle');
+                setCookie("FirebaseAuth", accessToken, 1);
+                $.ajax({
+                    url : '/llm/login',
+                    type : 'GET'
+                });
+            });
+        } else { // User is signed out!
+            $("#loginContainer").show();
+            $("#loggedInUserContainer").hide();
+            $("#appDiv").hide();
+            eraseCookie("FirebaseAuth");
+        }
+    }
+
+    function setCookie(name,value,hours) {
+        var expires = "";
+        if (hours) {
+            var date = new Date();
+            date.setTime(date.getTime() + (hours*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/;SameSite=Strict";
+    }
+    function eraseCookie(name) {
+        document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;SameSite=Strict';
+    }
+</script>
+</body>
+</html>
