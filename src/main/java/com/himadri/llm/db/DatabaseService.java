@@ -13,6 +13,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.defaultString;
+
 @Component
 @RequiredArgsConstructor
 public class DatabaseService {
@@ -23,8 +25,8 @@ public class DatabaseService {
         var firebaseToken = authenticationService.getFirebaseToken();
         var userDocument = firestore.collection("users").document(firebaseToken.getUid());
         userDocument.create(Map.of(
-            "email", firebaseToken.getEmail(),
-            "name", firebaseToken.getName(),
+            "email", defaultString(firebaseToken.getEmail()),
+            "name", defaultString(firebaseToken.getName()),
             "inferenceNumber", 0,
             "registrationDate", FieldValue.serverTimestamp(),
             "lastLogin",FieldValue.serverTimestamp()
