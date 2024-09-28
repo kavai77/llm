@@ -8,8 +8,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
-import org.thymeleaf.spring6.ISpringTemplateEngine;
-import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 
 import java.util.Locale;
 
@@ -28,14 +26,6 @@ public class LocaleConfiguration implements WebMvcConfigurer {
 		LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
 		lci.setParamName("lang");
 		return lci;
-	}
-
-	@Bean
-	public ThymeleafViewResolver thymeleafViewResolver(ISpringTemplateEngine templateEngine) {
-		ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
-		viewResolver.setTemplateEngine(templateEngine);
-		viewResolver.setCharacterEncoding("UTF-8");
-		return viewResolver;
 	}
 
 	@Override
