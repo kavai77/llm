@@ -56,11 +56,11 @@ public class LlmEndpoint {
         SseEmitter emitter = new SseEmitter();
         var userId = authenticationService.getUid();
         var numberOfInferences = databaseService.getNumberOfInferences(userId);
-        Model model;
+        LlmModel model;
         if (numberOfInferences < 5) {
-            model = Model.LLAMA_3_1_405B_INSTRUCT;
+            model = LlmModel.LLAMA_3_1_405B_INSTRUCT;
         } else if (numberOfInferences < 20) {
-            model = Model.LLAMA_3_70B_INSTRUCT;
+            model = LlmModel.LLAMA_3_70B_INSTRUCT;
         } else {
             closeEmitter(emitter, new AtomicReference<>(new IllegalStateException("You have reached the maximum number of questions today. Please come back tomorrow.")));
             return emitter;
@@ -133,7 +133,7 @@ public class LlmEndpoint {
 
     @RequiredArgsConstructor
     @Getter
-    public enum Model {
+    public enum LlmModel {
         LLAMA_3_1_405B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions"),
         LLAMA_3_70B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions");
 

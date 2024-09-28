@@ -34,7 +34,7 @@ public class DatabaseService {
         userDocument.update("lastLogin", FieldValue.serverTimestamp());
     }
 
-    public void addInference(String userId, LlmEndpoint.Model model, String request, String response) {
+    public void addInference(String userId, LlmEndpoint.LlmModel model, String request, String response) {
         firestore.collection("users").document(userId).update("inferenceNumber", FieldValue.increment(1));
         firestore.collection("inference").add(Map.of(
             "userId", userId,
