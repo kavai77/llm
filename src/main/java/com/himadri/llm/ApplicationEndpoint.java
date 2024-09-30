@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class ApplicationEndpoint {
     private final ResourceHash resourceHash;
 
-    @GetMapping(value = "/")
+    @GetMapping(value = {"/", "/index.html"})
     public String index(Model model) {
         model.addAttribute("indexcsshash", resourceHash.getResourceHash(ResourceHash.Resource.INDEX_CSS));
         return "index";
