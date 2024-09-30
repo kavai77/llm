@@ -1,0 +1,65 @@
+<div class="row" th:fragment="header">
+    <div class="col">
+        <h1 th:text="#{app.title}"></h1>
+    </div>
+    <div class="col right align-self-end">
+        <a href="/?lang=en">EN</a> <a href="/?lang=hu">HU</a><br>
+        <div id="loggedInUserContainer">
+            <img id="avatar" height="40px" src="" style="border-radius: 50%;" data-toggle="tooltip"
+                 data-placement="bottom">&nbsp;
+            <a href="#" id="logout"><small th:text="#{sign.out}"></small></a>
+        </div>
+    </div>
+</div>
+<div class="modal" tabindex="-1" id="authModal" th:fragment="authModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" th:text="#{welcome}"></h3><br>
+            </div>
+            <div class="modal-body">
+                <h6 class="modal-title" th:text="#{log.in}"></h6>
+                <div id="firebaseui-auth-container" class="col">
+                    <div class="firebaseui-container firebaseui-page-provider-sign-in firebaseui-id-page-provider-sign-in firebaseui-use-spinner">
+                        <div class="firebaseui-card-content">
+                            <form onsubmit="return false;">
+                                <ul class="firebaseui-idp-list">
+                                    <li class="firebaseui-list-item">
+                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-google firebaseui-id-idp-button"
+                                                id="googleLogin" style="background-color:#ffffff">
+                                            <span class="firebaseui-idp-icon-wrapper">
+                                                <img class="firebaseui-idp-icon"  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+                                            </span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.google}"></span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-short">Google</span>
+                                        </button>
+                                    </li>
+                                    <li class="firebaseui-list-item">
+                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-facebook firebaseui-id-idp-button"
+                                                id="facebookLogin" style="background-color:#3b5998">
+                                            <span class="firebaseui-idp-icon-wrapper">
+                                                <img class="firebaseui-idp-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/facebook.svg" alt="">
+                                            </span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.facebook}"></span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-short">Facebook</span>
+                                        </button>
+                                    </li>
+                                    <li class="firebaseui-list-item">
+                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-github firebaseui-id-idp-button"
+                                                id="githubLogin" style="background-color:#333333">
+                                        <span class="firebaseui-idp-icon-wrapper">
+                                            <img class="firebaseui-idp-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/github.svg" alt=""></span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.github}"></span>
+                                            <span class="firebaseui-idp-text firebaseui-idp-text-short">GitHub</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </form>
+                        </div>
+                        <div class="firebaseui-card-footer firebaseui-provider-sign-in-footer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

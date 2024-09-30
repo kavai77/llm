@@ -1,0 +1,71 @@
+<!doctype html>
+<html th:lang="${#locale.toLanguageTag()}"
+      th:xmllang="${#locale.toLanguageTag()}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{app.title}"></title>
+    <link rel="stylesheet" th:href="@{index.css(v=${indexcsshash})}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container-sm pt-3">
+    <div th:insert="~{/header::header}"></div>
+
+    <div class="row">
+        <div class="col">
+            <a class="btn btn-primary" th:text="#{new.question}" href="/"></a>
+        </div>
+    </div>
+    <div class="mt-3 row" id="spinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div class="mt-3 row">
+        <div id="questionDiv" class="hidden">
+            <div class="responseArea" id="questionInput"></div>
+        </div>
+    </div>
+    <div class="mt-3 row">
+        <div id="responseDiv" class="hidden">
+            <label for="responseArea" class="form-label" th:text="#{response}"></label>
+            <div id="responseArea" class="responseArea"></div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<script type="module" th:inline="javascript">
+    import {initAuth} from "./firebase.js";
+
+    $(document).ready(function () {
+        initAuth(false, /*[[#{github.not.supported}]]*/ "");
+        let searchParams = new URLSearchParams(window.location.search);
+        if (!searchParams.has('id')) {
+            window.location.href = '/';
+            return;
+        }
+        let id = searchParams.get('id');
+        $.ajax({
+            url: '/public/inference/' + id,
+            type: 'GET',
+            success: function (data) {
+                $("#spinner").hide();
+                $("#questionInput").text(data.request);
+                $("#responseArea").text(data.response);
+                $("#questionDiv").show();
+                $("#responseDiv").show();
+            },
+            error: function () {
+                window.location.href = '/';
+            }
+        });
+    });
+</script>
+</body>
+</html>

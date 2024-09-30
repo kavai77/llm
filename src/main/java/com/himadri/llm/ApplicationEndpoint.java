@@ -16,4 +16,9 @@ public class ApplicationEndpoint {
         return "index";
     }
 
+    @GetMapping(value = "/historic.html")
+    public String historic(Model model) {
+        model.addAttribute("indexcsshash", resourceHash.getResourceHash(ResourceHash.Resource.INDEX_CSS));
+        return "historic-question-and-answer";
+    }
 }

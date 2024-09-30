@@ -14,19 +14,7 @@
 </head>
 <body>
 <div class="container-sm pt-3">
-    <div class="row">
-        <div class="col">
-            <h1 th:text="#{app.title}"></h1>
-        </div>
-        <div class="col right align-self-end">
-            <a href="/?lang=en">EN</a> <a href="/?lang=hu">HU</a><br>
-            <div id="loggedInUserContainer">
-                <img id="avatar" height="40px" src="" style="border-radius: 50%;" data-toggle="tooltip"
-                     data-placement="bottom">&nbsp;
-                <a href="#" id="logout"><small th:text="#{sign.out}"></small></a>
-            </div>
-        </div>
-    </div>
+    <div th:insert="~{/header::header}"></div>
 
     <div class="row">
         <form>
@@ -34,7 +22,7 @@
                 <label for="questionInput" class="form-label" th:text="#{type.your.question}"></label>
                 <input type="text" class="form-control" id="questionInput" th:placeholder="#{your.question.placeholder}">
             </div>
-            <button type="submit" class="btn btn-primary" id="submitButton" th:text="#{submit}">Submit</button>
+            <button type="submit" class="btn btn-primary" id="submitButton" th:text="#{submit}"></button>
             <div class="mt-5">
                 <div id="responseDiv" class="hidden">
                     <label for="responseArea" class="form-label" th:text="#{response}"></label>
@@ -44,66 +32,15 @@
         </form>
     </div>
 </div>
-<div class="modal" tabindex="-1" id="authModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" th:text="#{welcome}">Welcome</h3><br>
-            </div>
-            <div class="modal-body">
-                <h6 class="modal-title" th:text="#{log.in}"></h6>
-                <div id="firebaseui-auth-container" class="col">
-                    <div class="firebaseui-container firebaseui-page-provider-sign-in firebaseui-id-page-provider-sign-in firebaseui-use-spinner">
-                        <div class="firebaseui-card-content">
-                            <form onsubmit="return false;">
-                                <ul class="firebaseui-idp-list">
-                                    <li class="firebaseui-list-item">
-                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-google firebaseui-id-idp-button"
-                                                id="googleLogin" style="background-color:#ffffff">
-                                            <span class="firebaseui-idp-icon-wrapper">
-                                                <img class="firebaseui-idp-icon"  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
-                                            </span>
-                                            <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.google}"></span>
-                                            <span class="firebaseui-idp-text firebaseui-idp-text-short">Google</span>
-                                        </button>
-                                    </li>
-                                    <li class="firebaseui-list-item">
-                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-facebook firebaseui-id-idp-button"
-                                                id="facebookLogin" style="background-color:#3b5998">
-                                            <span class="firebaseui-idp-icon-wrapper">
-                                                <img class="firebaseui-idp-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/facebook.svg" alt="">
-                                            </span>
-                                            <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.facebook}"></span>
-                                            <span class="firebaseui-idp-text firebaseui-idp-text-short">Facebook</span>
-                                        </button>
-                                    </li>
-                                    <li class="firebaseui-list-item">
-                                        <button class="firebaseui-idp-button mdl-button mdl-js-button mdl-button--raised firebaseui-idp-github firebaseui-id-idp-button"
-                                                id="githubLogin" style="background-color:#333333">
-                                        <span class="firebaseui-idp-icon-wrapper">
-                                            <img class="firebaseui-idp-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/github.svg" alt=""></span>
-                                        <span class="firebaseui-idp-text firebaseui-idp-text-long" th:text="#{sign.in.github}"></span>
-                                        <span class="firebaseui-idp-text firebaseui-idp-text-short">GitHub</span>
-                                        </button>
-                                    </li>
-                                </ul>
-                            </form>
-                        </div>
-                        <div class="firebaseui-card-footer firebaseui-provider-sign-in-footer"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div th:insert="~{/header::authModal}"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
 <script type="module" th:inline="javascript">
-    import {initializeApp} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import {getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, GithubAuthProvider} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import {initAuth} from "./firebase.js";
 
     $(document).ready(function () {
+        initAuth(true, /*[[#{github.not.supported}]]*/ "");
         $("#submitButton").click(function () {
             $("#responseArea").text(/*[[#{hang.on}]]*/ "");
             $("#responseDiv").show();
@@ -124,81 +61,7 @@
             });
             return false;
         });
-        const firebaseConfig = {
-            apiKey: "AIzaSyArvJCZKBBFL9AVP1U32fRc5IdXoQrtlsE",
-            authDomain: "sarcastic-llm.firebaseapp.com",
-            projectId: "sarcastic-llm",
-            storageBucket: "sarcastic-llm.appspot.com",
-            messagingSenderId: "447406791921",
-            appId: "1:447406791921:web:df58ecde16fc2346fedd50",
-            measurementId: "G-B4TQ6JS8PH"
-        };
-
-        const authModal = new bootstrap.Modal('#authModal', {
-            keyboard: false,
-            backdrop: 'static',
-            focus: true
-        });
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        auth.onAuthStateChanged(function (user) {
-            authStateObserver(user, authModal);
-        });
-
-        $("#googleLogin").click(function () {
-                const provider = new GoogleAuthProvider();
-                signInWithPopup(auth, provider);
-            });
-        $("#facebookLogin").click(function () {
-            const provider = new FacebookAuthProvider();
-            signInWithPopup(auth, provider);
-        });
-        $("#githubLogin").click(function () {
-            alert(/*[[#{github.not.supported}]]*/ "");
-            // const provider = new GithubAuthProvider();
-            // signInWithPopup(auth, provider);
-        });
-
-        $("#logout").click(function () {
-            auth.signOut();
-        });
     });
-
-    function authStateObserver(user, authModal) {
-        if (user) { // User is signed in!
-            user.getIdToken().then(function (accessToken) {
-                authModal.hide();
-                $("#loggedInUserContainer").show();
-                $("#avatar").prop('src', user.photoURL)
-                    .prop('title', user.displayName)
-                    .tooltip('_fixTitle');
-                setCookie("FirebaseAuth", accessToken, 1);
-                $.ajax({
-                    url: '/llm/login',
-                    type: 'GET'
-                });
-            });
-        } else { // User is signed out!
-            $("#loggedInUserContainer").hide();
-            authModal.show();
-            eraseCookie("FirebaseAuth");
-        }
-    }
-
-    function setCookie(name, value, hours) {
-        var expires = "";
-        if (hours) {
-            var date = new Date();
-            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/;SameSite=Strict";
-    }
-
-    function eraseCookie(name) {
-        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;SameSite=Strict';
-    }
 </script>
 </body>
 </html>

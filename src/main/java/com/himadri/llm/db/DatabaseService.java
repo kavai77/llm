@@ -3,8 +3,8 @@ package com.himadri.llm.db;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
-import com.himadri.llm.LlmEndpoint;
 import com.himadri.llm.security.AuthenticationService;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -34,15 +34,24 @@ public class DatabaseService {
         userDocument.update("lastLogin", FieldValue.serverTimestamp());
     }
 
-    public void addInference(String userId, LlmEndpoint.LlmModel model, String request, String response) {
+    public void addInference(String userId, String model, String request, String response) {
         firestore.collection("users").document(userId).update("inferenceNumber", FieldValue.increment(1));
         firestore.collection("inference").add(Map.of(
             "userId", userId,
-            "model", model.name(),
+            "model", model,
             "request", request,
             "response", response,
             "date", FieldValue.serverTimestamp()
         ));
+    }
+
+    @SneakyThrows
+    public InferenceResponse getInference(String id) {
+        var document = firestore.collection("inference").document(id).get().get();
+        return InferenceResponse.builder()
+                    .request(document.getString("request"))
+                    .response(document.getString("response"))
+                    .build();
     }
 
     @SneakyThrows
@@ -55,4 +64,7 @@ public class DatabaseService {
                 .get()
                 .getCount();
     }
+
+    @Builder
+    public record InferenceResponse(String request, String response) {}
 }
