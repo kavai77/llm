@@ -34,15 +34,16 @@ public class DatabaseService {
         userDocument.update("lastLogin", FieldValue.serverTimestamp());
     }
 
-    public void addInference(String userId, String model, String request, String response) {
+    @SneakyThrows
+    public String addInference(String userId, String model, String request, String response) {
         firestore.collection("users").document(userId).update("inferenceNumber", FieldValue.increment(1));
-        firestore.collection("inference").add(Map.of(
+        return firestore.collection("inference").add(Map.of(
             "userId", userId,
             "model", model,
             "request", request,
             "response", response,
             "date", FieldValue.serverTimestamp()
-        ));
+        )).get().getId();
     }
 
     @SneakyThrows

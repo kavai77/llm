@@ -1,38 +1,35 @@
 package com.himadri.llm;
 
 import com.google.common.hash.Hashing;
-import org.apache.commons.io.IOUtils;
+import lombok.Getter;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
+@Getter
 public class ResourceHash {
-    public enum Resource {
-        INDEX_CSS("/static/index.css");
-
-        private final String path;
-
-        Resource(String path) {
-            this.path = path;
-        }
-    }
-    private final Map<Resource, String> resourceHashMap = new EnumMap<>(Resource.class);
+    private final List<Resource> resources = new ArrayList<>();
 
     @PostConstruct
     public void init() throws IOException {
-        for (Resource resource: Resource.values()) {
-            String hash = Hashing.sha256()
-                    .hashBytes(IOUtils.resourceToByteArray(resource.path))
-                    .toString();
-            resourceHashMap.put(resource, hash);
-        }
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Arrays.stream(resolver.getResources("classpath:/static/**")).forEach(resource -> {
+            try {
+                String hash = Hashing.sha256()
+                        .hashBytes(resource.getContentAsByteArray())
+                        .toString();
+                resources.add(new Resource(resource.getFilename().toLowerCase().replace(".", "_"), hash));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    public String getResourceHash(Resource resource) {
-        return resourceHashMap.get(resource);
-    }
+    record Resource(String name, String hash) {}
 }

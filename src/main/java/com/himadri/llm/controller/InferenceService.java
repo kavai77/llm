@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Component
@@ -51,7 +52,8 @@ public class InferenceService {
         } else if (numberOfInferences < 20) {
             model = LlmModel.LLAMA_3_70B_INSTRUCT;
         } else {
-            closeEmitter(emitter, new AtomicReference<>(new IllegalStateException("You have reached the maximum number of questions today. Please come back tomorrow.")));
+            closeEmitter(emitter, new AtomicReference<>(),
+                    new AtomicReference<>(new IllegalStateException("You have reached the maximum number of questions today. Please come back tomorrow.")));
             return emitter;
         }
 
@@ -71,6 +73,7 @@ public class InferenceService {
                     .build(), headers);
             var predictApiResponse = restTemplate.exchange(model.getUrl(), HttpMethod.POST, entity, PredictApiResponse.class);
             StringBuilder sb = new StringBuilder();
+            AtomicReference<String> idReference = new AtomicReference<>();
             AtomicReference<Exception> completedWithError = new AtomicReference<>();
             try (var httpResponse = restTemplate.execute(predictApiResponse.getBody().urls().stream(), HttpMethod.GET,
                     request -> request.getHeaders().add("Accept", "text/event-stream"),
@@ -93,22 +96,23 @@ public class InferenceService {
                         } catch (IOException e) {
                             completedWithError.set(e);
                         }
-                        databaseService.addInference(userId, model.name(), input, sb.toString());
+                        var id = databaseService.addInference(userId, model.name(), input, sb.toString());
+                        idReference.set(id);
                         return response;
                     })) {
             } finally {
-                closeEmitter(emitter, completedWithError);
+                closeEmitter(emitter, idReference, completedWithError);
             }
         });
         return emitter;
     }
 
-    private static void closeEmitter(SseEmitter emitter, AtomicReference<Exception> completedWithError) {
+    private static void closeEmitter(SseEmitter emitter, AtomicReference<String> id, AtomicReference<Exception> completedWithError) {
         try {
             if (completedWithError.get() != null) {
                 emitter.send(SseEmitter.event().name("error").data(completedWithError.get().getMessage()));
             }
-            emitter.send(SseEmitter.event().name("done").data(""));
+            emitter.send(SseEmitter.event().name("done").data(defaultString(id.get())));
         } catch (IOException e) {
             completedWithError.set(e);
         } finally {
