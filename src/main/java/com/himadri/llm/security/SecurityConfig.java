@@ -22,13 +22,13 @@ import java.io.IOException;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    public static final String GAE_SERVICE_ACCOUNT = "/usr/local/secrets/llm/sarcastic-llm-firebase-adminsdk-kkzku-86ea68f592.json";
+    public static final String SECRETS = "/usr/local/secrets/llm/";
 
     private final UserTokenAuthenticationConverter userTokenAuthenticationConverter;
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
-        GoogleCredentials googleCredentials = GoogleCredentials.fromStream(new FileInputStream(GAE_SERVICE_ACCOUNT));
+        GoogleCredentials googleCredentials = GoogleCredentials.fromStream(new FileInputStream(SECRETS + "/sarcastic-llm-firebase-adminsdk-kkzku-86ea68f592.json"));
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(googleCredentials)
                 .build();

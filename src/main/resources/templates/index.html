@@ -30,7 +30,7 @@
         <form>
             <div class="mb-3">
                 <label for="questionInput" class="form-label" th:text="#{type.your.question}"></label>
-                <input type="text" class="form-control" id="questionInput" th:placeholder="#{your.question.placeholder}">
+                <input type="text" class="form-control" id="questionInput" maxlength="300" th:placeholder="#{your.question.placeholder}">
             </div>
             <button type="submit" class="btn btn-primary" id="submitButton" th:text="#{submit}"></button>
             <div class="mt-5">

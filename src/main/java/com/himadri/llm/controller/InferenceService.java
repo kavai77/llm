@@ -2,6 +2,7 @@ package com.himadri.llm.controller;
 
 import com.himadri.llm.db.DatabaseService;
 import com.himadri.llm.security.AuthenticationService;
+import com.himadri.llm.security.SecurityConfig;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,10 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Component
 @RequiredArgsConstructor
-@PropertySource("file:/usr/local/secrets/llm/secrets.properties")
+@PropertySource("file:" + SecurityConfig.SECRETS + "secrets.properties")
 public class InferenceService {
     public static final String DATA_PREFIX = "data: ";
-    public static final int MAX_TOKENS = 2048;
+    public static final int MAX_TOKENS = 4092;
 
     @Value("${replicate.bearer.auth}")
     private final String replicateBearerAuth;
@@ -43,14 +44,15 @@ public class InferenceService {
     @SneakyThrows
     public SseEmitter predict(String input) {
         checkArgument(isNotBlank(input));
+        checkArgument(input.length() <= 300);
         SseEmitter emitter = new SseEmitter();
         var userId = authenticationService.getUid();
         var numberOfInferences = databaseService.getNumberOfInferences(userId);
         LlmModel model;
         if (numberOfInferences < 5) {
-            model = LlmModel.LLAMA_3_1_405B_INSTRUCT;
+            model = LlmModel.BETTER;
         } else if (numberOfInferences < 20) {
-            model = LlmModel.LLAMA_3_70B_INSTRUCT;
+            model = LlmModel.CHEAPER;
         } else {
             closeEmitter(emitter, new AtomicReference<>(),
                     new AtomicReference<>(new IllegalStateException("You have reached the maximum number of questions today. Please come back tomorrow.")));
@@ -127,8 +129,8 @@ public class InferenceService {
     @RequiredArgsConstructor
     @Getter
     public enum LlmModel {
-        LLAMA_3_1_405B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions"),
-        LLAMA_3_70B_INSTRUCT("https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions");
+        BETTER("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions"),
+        CHEAPER("https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions");
 
         private final String url;
     }
